@@ -32,11 +32,11 @@
 // assets/ignition/files/etc/tmpfiles.d/cleanup-cni.conf
 // assets/ignition/files/usr/local/bin/setup-apiserver-ip.sh.template
 // assets/ignition/files/usr/local/bin/teardown-apiserver-ip.sh.template
+// assets/ignition/ignition-deployment.yaml
+// assets/ignition/ignition-route.yaml
+// assets/ignition/ignition-service.yaml
 // assets/ignition/units/apiserver-ip.service
 // assets/ignition/units/kubelet.service
-// assets/ignition-deployment.yaml
-// assets/ignition-route.yaml
-// assets/ignition-service.yaml
 // assets/kube-apiserver/client.conf
 // assets/kube-apiserver/config.yaml
 // assets/kube-apiserver/kube-apiserver-config-configmap.yaml
@@ -1588,6 +1588,118 @@ func ignitionFilesUsrLocalBinTeardownApiserverIpShTemplate() (*asset, error) {
 	return a, nil
 }
 
+var _ignitionIgnitionDeploymentYaml = []byte(`apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ignition-config
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ignition-provider
+  template:
+    metadata:
+      labels:
+        app: ignition-provider
+    spec:
+      containers:
+      - args:
+        - -m
+        - http.server
+        - --directory
+        - /assets
+        command:
+        - /usr/local/bin/python
+        image: docker.io/python:latest
+        name: python
+        ports:
+        - containerPort: 8000
+          name: web-server
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 10m
+            memory: 150Mi
+        volumeMounts:
+        - mountPath: /assets
+          name: ignition-config
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: ignition-config
+        name: ignition-config
+`)
+
+func ignitionIgnitionDeploymentYamlBytes() ([]byte, error) {
+	return _ignitionIgnitionDeploymentYaml, nil
+}
+
+func ignitionIgnitionDeploymentYaml() (*asset, error) {
+	bytes, err := ignitionIgnitionDeploymentYamlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "ignition/ignition-deployment.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _ignitionIgnitionRouteYaml = []byte(`apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: ignition-provider
+spec:
+  to:
+    kind: Service
+    name: ignition-provider
+`)
+
+func ignitionIgnitionRouteYamlBytes() ([]byte, error) {
+	return _ignitionIgnitionRouteYaml, nil
+}
+
+func ignitionIgnitionRouteYaml() (*asset, error) {
+	bytes, err := ignitionIgnitionRouteYamlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "ignition/ignition-route.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _ignitionIgnitionServiceYaml = []byte(`apiVersion: v1
+kind: Service
+metadata:
+  name: ignition-provider
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    app: ignition-provider
+  type: ClusterIP
+`)
+
+func ignitionIgnitionServiceYamlBytes() ([]byte, error) {
+	return _ignitionIgnitionServiceYaml, nil
+}
+
+func ignitionIgnitionServiceYaml() (*asset, error) {
+	bytes, err := ignitionIgnitionServiceYamlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "ignition/ignition-service.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 var _ignitionUnitsApiserverIpService = []byte(`[Unit]
 Description=Sets up local IP to proxy API server requests
 Wants=network-online.target
@@ -1652,118 +1764,6 @@ func ignitionUnitsKubeletService() (*asset, error) {
 	}
 
 	info := bindataFileInfo{name: "ignition/units/kubelet.service", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
-	a := &asset{bytes: bytes, info: info}
-	return a, nil
-}
-
-var _ignitionDeploymentYaml = []byte(`apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ignition-config
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: ignition-provider
-  template:
-    metadata:
-      labels:
-        app: ignition-provider
-    spec:
-      containers:
-      - args:
-        - -m
-        - http.server
-        - --directory
-        - /assets
-        command:
-        - /usr/local/bin/python
-        image: docker.io/python:latest
-        name: python
-        ports:
-        - containerPort: 8000
-          name: web-server
-          protocol: TCP
-        resources:
-          requests:
-            cpu: 10m
-            memory: 150Mi
-        volumeMounts:
-        - mountPath: /assets
-          name: ignition-config
-      volumes:
-      - configMap:
-          defaultMode: 420
-          name: ignition-config
-        name: ignition-config
-`)
-
-func ignitionDeploymentYamlBytes() ([]byte, error) {
-	return _ignitionDeploymentYaml, nil
-}
-
-func ignitionDeploymentYaml() (*asset, error) {
-	bytes, err := ignitionDeploymentYamlBytes()
-	if err != nil {
-		return nil, err
-	}
-
-	info := bindataFileInfo{name: "ignition-deployment.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
-	a := &asset{bytes: bytes, info: info}
-	return a, nil
-}
-
-var _ignitionRouteYaml = []byte(`apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: ignition-provider
-spec:
-  to:
-    kind: Service
-    name: ignition-provider
-`)
-
-func ignitionRouteYamlBytes() ([]byte, error) {
-	return _ignitionRouteYaml, nil
-}
-
-func ignitionRouteYaml() (*asset, error) {
-	bytes, err := ignitionRouteYamlBytes()
-	if err != nil {
-		return nil, err
-	}
-
-	info := bindataFileInfo{name: "ignition-route.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
-	a := &asset{bytes: bytes, info: info}
-	return a, nil
-}
-
-var _ignitionServiceYaml = []byte(`apiVersion: v1
-kind: Service
-metadata:
-  name: ignition-provider
-spec:
-  ports:
-  - name: http
-    port: 80
-    protocol: TCP
-    targetPort: 8000
-  selector:
-    app: ignition-provider
-  type: ClusterIP
-`)
-
-func ignitionServiceYamlBytes() ([]byte, error) {
-	return _ignitionServiceYaml, nil
-}
-
-func ignitionServiceYaml() (*asset, error) {
-	bytes, err := ignitionServiceYamlBytes()
-	if err != nil {
-		return nil, err
-	}
-
-	info := bindataFileInfo{name: "ignition-service.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -5017,11 +5017,11 @@ var _bindata = map[string]func() (*asset, error){
 	"ignition/files/etc/tmpfiles.d/cleanup-cni.conf":                                     ignitionFilesEtcTmpfilesDCleanupCniConf,
 	"ignition/files/usr/local/bin/setup-apiserver-ip.sh.template":                        ignitionFilesUsrLocalBinSetupApiserverIpShTemplate,
 	"ignition/files/usr/local/bin/teardown-apiserver-ip.sh.template":                     ignitionFilesUsrLocalBinTeardownApiserverIpShTemplate,
+	"ignition/ignition-deployment.yaml":                                                  ignitionIgnitionDeploymentYaml,
+	"ignition/ignition-route.yaml":                                                       ignitionIgnitionRouteYaml,
+	"ignition/ignition-service.yaml":                                                     ignitionIgnitionServiceYaml,
 	"ignition/units/apiserver-ip.service":                                                ignitionUnitsApiserverIpService,
 	"ignition/units/kubelet.service":                                                     ignitionUnitsKubeletService,
-	"ignition-deployment.yaml":                                                           ignitionDeploymentYaml,
-	"ignition-route.yaml":                                                                ignitionRouteYaml,
-	"ignition-service.yaml":                                                              ignitionServiceYaml,
 	"kube-apiserver/client.conf":                                                         kubeApiserverClientConf,
 	"kube-apiserver/config.yaml":                                                         kubeApiserverConfigYaml,
 	"kube-apiserver/kube-apiserver-config-configmap.yaml":                                kubeApiserverKubeApiserverConfigConfigmapYaml,
@@ -5202,14 +5202,14 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				}},
 			}},
 		}},
+		"ignition-deployment.yaml": {ignitionIgnitionDeploymentYaml, map[string]*bintree{}},
+		"ignition-route.yaml":      {ignitionIgnitionRouteYaml, map[string]*bintree{}},
+		"ignition-service.yaml":    {ignitionIgnitionServiceYaml, map[string]*bintree{}},
 		"units": {nil, map[string]*bintree{
 			"apiserver-ip.service": {ignitionUnitsApiserverIpService, map[string]*bintree{}},
 			"kubelet.service":      {ignitionUnitsKubeletService, map[string]*bintree{}},
 		}},
 	}},
-	"ignition-deployment.yaml": {ignitionDeploymentYaml, map[string]*bintree{}},
-	"ignition-route.yaml":      {ignitionRouteYaml, map[string]*bintree{}},
-	"ignition-service.yaml":    {ignitionServiceYaml, map[string]*bintree{}},
 	"kube-apiserver": {nil, map[string]*bintree{
 		"client.conf":                                  {kubeApiserverClientConf, map[string]*bintree{}},
 		"config.yaml":                                  {kubeApiserverConfigYaml, map[string]*bintree{}},

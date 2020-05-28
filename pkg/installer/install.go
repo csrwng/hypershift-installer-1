@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
 	"strings"
@@ -37,6 +38,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/yaml"
 
 	operatorv1 "github.com/openshift/api/operator/v1"
 	operatorclient "github.com/openshift/client-go/operator/clientset/versioned"
@@ -76,9 +78,9 @@ var (
 	coreScheme = runtime.NewScheme()
 	coreCodecs = serializer.NewCodecFactory(coreScheme)
 
-	ignitionDeploymentBytes = assets.MustAsset("ignition-deployment.yaml")
-	ignitionServiceBytes    = assets.MustAsset("ignition-service.yaml")
-	ignitionRouteBytes      = assets.MustAsset("ignition-route.yaml")
+	ignitionDeploymentBytes = assets.MustAsset("ignition/ignition-deployment.yaml")
+	ignitionServiceBytes    = assets.MustAsset("ignition/ignition-service.yaml")
+	ignitionRouteBytes      = assets.MustAsset("ignition/ignition-route.yaml")
 )
 
 func init() {
@@ -321,6 +323,33 @@ func InstallCluster(name, releaseImage, dhParamsFile string, waitForReady bool) 
 		return fmt.Errorf("failed to render PKI secrets: %v", err)
 	}
 	params.OpenshiftAPIServerCABundle = base64.StdEncoding.EncodeToString(caBytes)
+
+	// Save Params
+	configFileName := filepath.Join(workingDir, "cluster.yaml")
+	if err != nil {
+		return fmt.Errorf("failed to create cluster configuration file: %v", err)
+	}
+	configBytes, err := yaml.Marshal(params)
+	if err != nil {
+		return fmt.Errorf("failed to marshal configuration into yaml: %v", err)
+	}
+	if err = ioutil.WriteFile(configFileName, configBytes, 0644); err != nil {
+		return fmt.Errorf("failed to write config file: %v", err)
+	}
+	ibmROKSBinary, err := getROKSBinary()
+	if err != nil {
+		return fmt.Errorf("Cannot find ibm-roks binary. Either place it in PATH, or set its path in IBM_ROKS: %v", err)
+	}
+	cmd := exec.Command(ibmROKSBinary, "render",
+		"--config", configFileName,
+		"--output-dir", manifestsDir,
+		"--pull-secret", pullSecretFile,
+	)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err = cmd.Run(); err != nil {
+		return fmt.Errorf("Failed to render manifests using IBM ROKS toolkit: %v", err)
+	}
 	if err = render.RenderClusterManifests(params, pullSecretFile, pkiDir, manifestsDir, true, true, true, true); err != nil {
 		return fmt.Errorf("failed to render manifests for cluster: %v", err)
 	}
@@ -1087,4 +1116,11 @@ func hash(s string) string {
 	intHash := hash.Sum32()
 	result := fmt.Sprintf("%08x", intHash)
 	return result
+}
+
+func getROKSBinary() (string, error) {
+	if os.Getenv("IBM_ROKS") != "" {
+		return os.Getenv("IBM_ROKS"), nil
+	}
+	return exec.LookPath("ibm-roks")
 }
