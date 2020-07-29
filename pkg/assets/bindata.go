@@ -1428,25 +1428,25 @@ spec:
         contents:
           source: "{{ dataURLEncode "apiserver-haproxy/setup-apiserver-ip.sh" }}"
           verification: {}
-        mode: 493
+        mode: 0755
       - filesystem: root
         path: "/usr/local/bin/teardown-apiserver-ip.sh"
         contents:
           source: "{{ dataURLEncode "apiserver-haproxy/teardown-apiserver-ip.sh" }}"
           verification: {}
-        mode: 493
+        mode: 0755
       - filesystem: root
         path: "/etc/kubernetes/apiserver-proxy-config/haproxy.cfg"
         contents:
           source: "{{ dataURLEncode "apiserver-haproxy/haproxy.cfg" }}"
           verification: {}
-        mode: 420
+        mode: 0644
       - filesystem: root
         path: "/etc/kubernetes/manifests/kube-apiserver-proxy.yaml"
         contents:
           source: "{{ dataURLEncode "apiserver-haproxy/kube-apiserver-proxy.yaml" }}"
           verification: {}
-        mode: 420
+        mode: 0644
     systemd:
       units:
       - contents: |-
@@ -1889,7 +1889,6 @@ func kubeSchedulerKubeSchedulerSecretYaml() (*asset, error) {
 var _machineConfigServerClusterInfrastructure02ConfigYaml = []byte(`apiVersion: config.openshift.io/v1
 kind: Infrastructure
 metadata:
-  creationTimestamp: null
   name: cluster
 spec:
   cloudConfig:
@@ -1923,7 +1922,6 @@ func machineConfigServerClusterInfrastructure02ConfigYaml() (*asset, error) {
 var _machineConfigServerClusterNetwork02ConfigYaml = []byte(`apiVersion: config.openshift.io/v1
 kind: Network
 metadata:
-  creationTimestamp: null
   name: cluster
 spec:
   clusterNetwork:
@@ -1955,7 +1953,6 @@ func machineConfigServerClusterNetwork02ConfigYaml() (*asset, error) {
 var _machineConfigServerClusterProxy01ConfigYaml = []byte(`apiVersion: config.openshift.io/v1
 kind: Proxy
 metadata:
-  creationTimestamp: null
   name: cluster
 spec:
   trustedCA:
